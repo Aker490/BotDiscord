@@ -1,12 +1,16 @@
 import discord
 from discord.ext import commands
 from discord.ui import Button, View
-
-from serverbot import server_on
+import time
 
 intents = discord.Intents.default()
 intents.message_content = True
 bot = commands.Bot(command_prefix="!", intents=intents)
+
+TOKEN = 'YOUR_BOT_TOKEN'  # ใส่โทเค็นของบอทของคุณที่นี่
+cooldowns = {}  # Dictionary เก็บข้อมูลคลูดาวน์ของผู้ใช้
+
+COOLDOWN_TIME = 60  # เวลาคูลดาวน์ในวินาที
 
 @bot.event
 async def on_ready():
@@ -23,7 +27,7 @@ async def role_button(ctx):
 
     # สร้าง Embed
     embed = discord.Embed(title="กดปุ่มเพื่อรับยศ", color=0xE2ABE6)
-    image_url = "https://media.discordapp.net/attachments/1267282004349812818/1267282531468705872/image.png?ex=66a8e114&is=66a78f94&hm=c58bfc216ec65f8718bc27c4f75e09150e5e27db9165c91d3634cf6c9d421b39&=&format=webp&quality=lossless&width=1188&height=670"  # เปลี่ยนเป็น URL ของรูปภาพที่ต้องการใช้
+    image_url = "https://example.com/path/to/image.png"  # เปลี่ยนเป็น URL ของรูปภาพที่ต้องการใช้
     embed.set_image(url=image_url)
     
     # ส่ง Embed พร้อมปุ่ม
@@ -32,6 +36,14 @@ async def role_button(ctx):
 @bot.event
 async def on_interaction(interaction: discord.Interaction):
     if interaction.type == discord.InteractionType.component and interaction.data["custom_id"] == "get_role":
+        user_id = interaction.user.id
+        current_time = time.time()
+
+        # ตรวจสอบคลูดาวน์
+        if user_id in cooldowns and current_time - cooldowns[user_id] < COOLDOWN_TIME:
+            await interaction.response.send_message(f"โปรดลองใหม่อีกครั้งใน {int(COOLDOWN_TIME - (current_time - cooldowns[user_id]))} วินาที.", ephemeral=True)
+            return
+        
         role_id = 1229803400867221654  # เปลี่ยนเป็นไอดียศที่ต้องการ
         role = interaction.guild.get_role(role_id)
 
@@ -41,6 +53,7 @@ async def on_interaction(interaction: discord.Interaction):
             else:
                 try:
                     await interaction.user.add_roles(role)
+                    cooldowns[user_id] = current_time  # บันทึกเวลาการกดปุ่มครั้งล่าสุด
                     await interaction.response.send_message("คุณได้รับยศเรียบร้อยแล้ว!", ephemeral=True)
                 except Exception as e:
                     print(f'Error adding role: {e}')
@@ -48,7 +61,4 @@ async def on_interaction(interaction: discord.Interaction):
         else:
             await interaction.response.send_message("ไม่พบยศที่ต้องการ", ephemeral=True)
 
-server_on()
-
-bot.run(os.getenv('TOKEN'))
-
+bot.run(TOKEN)
