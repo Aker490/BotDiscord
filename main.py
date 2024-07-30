@@ -8,8 +8,6 @@ intents = discord.Intents.default()
 intents.message_content = True
 bot = commands.Bot(command_prefix="!", intents=intents)
 
-TOKEN = 'YOUR_BOT_TOKEN'  # ใส่โทเค็นของบอทของคุณที่นี่
-
 @bot.event
 async def on_ready():
     print(f'Logged in as {bot.user}')
@@ -52,4 +50,5 @@ async def on_interaction(interaction: discord.Interaction):
 
 server_on()
 
-bot.run(TOKEN)
+bot.run(os.getenv('TOKEN'))
+
